@@ -36,6 +36,7 @@ AND ( DepartmentName = 'Purchasing' OR DepartmentName = 'Executive');
 Select TOP 5 * 
 From DimProduct
 Where EndDate IS NULL
+AND status = 'Current'
 AND ((ReorderPoint > 300 AND SafetyStockLevel > 400) OR (ListPrice BETWEEN 100 AND 300))
 ORDER BY ListPrice DESC;
 
@@ -51,7 +52,7 @@ ORDER BY SalesAmount DESC;
 
 SELECT ProductKey, DealerPrice - ListPrice*1.1 AS GapPrice
 FROM DimProduct
-WHERE Color IS NOT NULL
+WHERE Color NOT LIKE 'NA'
 ORDER BY GapPrice DESC;
 
 --Câu hỏi 2: Đối với các đơn hàng giao đúng hạn được đặt vào năm 2012, 2013 của khách hàng doanh nghiệp tiến hành tính toán các chỉ số sau:
@@ -81,7 +82,8 @@ Where DepartmentName = 'Production';
 
 Select ProductKey, ProductAlternateKey, EnglishProductName
 From DimProduct
-Where ProductAlternateKey LIKE 'LJ%';
+Where ProductAlternateKey LIKE 'LJ%'
+AND EnglishProductName LIKE '%Long Sleeve%';
 
 --Câu 4: Sử dụng LIKE tìm các sản phẩm có ProductAlternateKey có kí tự đầu là chữ F, kí tự thứ 7 là chữ S và kí tự cuối cùng là số 6
 
@@ -128,25 +130,18 @@ From DimCustomer;
 
 SELECT ProductKey,Color, ProductAlternateKey,
     CASE 
-        WHEN Color IS NOT NULL THEN SUBSTRING(ProductAlternateKey, 1, CHARINDEX('-', ProductAlternateKey) - 1)
+        WHEN Color <> 'NA' THEN SUBSTRING(ProductAlternateKey, 1, CHARINDEX('-', ProductAlternateKey) - 1)
         ELSE SUBSTRING(ProductAlternateKey, CHARINDEX('-', ProductAlternateKey) + 1, LEN(ProductAlternateKey) - CHARINDEX('-', ProductAlternateKey))
     END AS ProductName
 FROM DimProduct;
 
 --Câu hỏi 3: (Nâng cao) Thêm một cột chuẩn hóa lại Size của sản phẩm
-
--- Nếu không có Sizethì là NULL
-
+-- Nếu không có Size thì là NULL
 -- Size bằng chữ thì vẫn giữ nguyên
-
 -- Nếu Size bằng số thì theo logic như sau
-
 -- < 45 thì là S
-
 -- 45 – 50 thì là M
-
 -- 51 – 55 thì là L
-
 -- Còn lại là XL
 
 Select ProductKey, Size, 
@@ -159,3 +154,5 @@ Select ProductKey, Size,
         ELSE 'XL'
     END AS StandardSize
 FROM DimProduct;
+
+
