@@ -33,7 +33,7 @@ Select *
 FROM DimCustomer
 WHERE CustomerKey IN 
 (SELECT TOP 5 CustomerKey FROM FactInternetSales WHERE CustomerKey IN 
-    (SELECT CustomerKey FROM DimCustomer) GROUP BY CustomerKey ORDER BY sum(SalesAmount) DESC);
+    (SELECT CustomerKey FROM DimCustomer WHERE Gender = 'F') GROUP BY CustomerKey ORDER BY sum(SalesAmount) DESC);
 
 --Câu 3: Trả về thông tin của top 5 sản phẩm bán chạy nhất màu đỏ có ListPrice > 500
 
@@ -56,6 +56,7 @@ AND ProductKey IN
 	Order By Sum(SalesAmount) DESC)
 
 --Phần 3: Sử dụng truy vấn lồng với CTE
+
 --Câu 1: Hãy viết câu truy vấn cho biết các thông tin sau:
 --Trung bình một reseller chi tiêu bao nhiêu tiền ?
 --Trung bình một reseller mua bao nhiêu đơn hàng ?
