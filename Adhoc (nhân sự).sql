@@ -148,12 +148,12 @@ SUM(
     Case
     WHEN OrganizationLevel IN (1,2) THEN 1
     ELSE 0 END
-    ) AS SoLuongNhanVien,
+    ) AS SoLuongQuanLy,
 SUM(
     CASE 
     WHEN OrganizationLevel IN (3,4) THEN 1 
     ELSE 0 END
-    ) AS SoLuongQuanLy
+    ) AS SoLuongNhanVien
 FROM CTE
 
 GROUP BY PhongBan
