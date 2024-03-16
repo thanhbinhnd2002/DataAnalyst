@@ -2,29 +2,35 @@
 
 --Tỉ lệ nhân viên nghỉ việc theo từng năm ?
 --Muc Tieu : cho biết sự gắn kết của nhân viên với công ty nhằm đưa ra các biện pháp giữ chân nhân viên
--- WITH CTE1 AS(
---     SELECT YEAR(EDH.EndDate) AS Nam, COUNT(*) AS SoNhanVienNghiViec
---     FROM HumanResources.EmployeeDepartmentHistory AS EDH
---     WHERE EDH.EndDate IS NOT NULL
---     GROUP BY YEAR(EDH.EndDate)
--- ),
--- CTE2 AS(
---     SELECT YEAR(EDH.StartDate) AS Nam, COUNT(*) AS TongSoNhanVien
---     FROM HumanResources.EmployeeDepartmentHistory AS EDH
---     WHERE EDH.EndDate IS NULL
---     GROUP BY YEAR(EDH.StartDate)
-    
--- )
--- SELECT CTE1.Nam,
---     Case
---         WHEN CTE2.TongSoNhanVien = 0 THEN 0
---         ELSE CAST(CTE1.SoNhanVienNghiViec AS FLOAT)*100 / CTE2.TongSoNhanVien
---     END AS TiLeNhanVienNghiViec
+WITH CTE1 AS (
+    SELECT YEAR(EDH.EndDate) AS Nam, COUNT(DISTINCT EDH.BusinessEntityID) AS SoNhanVienNghiViec
+    FROM HumanResources.EmployeeDepartmentHistory AS EDH
+    WHERE EDH.EndDate IS NOT NULL
+    GROUP BY YEAR(EDH.EndDate)
+),
+CTE2 AS (
+    SELECT YEAR(E.HireDate) AS Nam, COUNT(E.BusinessEntityID) AS TongSoNhanVienVaoLam
+    FROM HumanResources.Employee AS E
+    GROUP BY YEAR(E.HireDate) 
+),
+CTE3 AS (
+    SELECT 
+    CTE2.Nam,
+    SUM(TongSoNhanVienVaoLam) OVER (ORDER BY CTE2.Nam) - SUM(SoNhanVienNghiViec) OVER (ORDER BY CTE1.Nam) AS TongSoNhanVien
+    FROM CTE2
+	Full JOIN CTE1 on CTE2.Nam = CTE1.Nam
+)
+SELECT 
+    CTE1.Nam,
+    CASE
+        WHEN CTE2.TongSoNhanVienVaoLam = 0 THEN 0
+        ELSE CAST(CTE1.SoNhanVienNghiViec AS FLOAT) * 100 / CTE3.TongSoNhanVien
+    END AS TiLeNhanVienNghiViec
+FROM 
+    CTE1
+JOIN CTE2 ON CTE1.Nam = CTE2.Nam
+Join CTE3 ON CTE2.Nam = CTE3.Nam
 
--- FROM HumanResources.EmployeeDepartmentHistory AS EDH
--- JOIN CTE1 ON YEAR(EDH.EndDate) = CTE1.Nam
--- JOIN CTE2 ON YEAR(EDH.StartDate) = CTE2.Nam
---  => Đang lỗi
 ---------------------------------------------------------------------------------
 
 --Nhân viên nghỉ việc tập trung chủ yếu ở cấp bậc, phòng ban nào ?
@@ -72,7 +78,7 @@ WITH EmployeeSalary AS (
     --Tính %chi phí trả lương trên doanh số
     SELECT SUM((SP.Bonus + SP.CommissionPct*SP.SalesYTD)*100)/SUM(SP.SalesYTD)  AS BonusPercentage
     FROM Sales.SalesPerson AS SP
-    
+
 )
 SELECT
     BonusPercentage,
@@ -80,8 +86,6 @@ SELECT
 FROM
     EmployeeSalary, BonusSalary
 GROUP BY BonusPercentage
-
-
 
 --------------------------------------------------------------------------------------------
 
@@ -155,5 +159,20 @@ SUM(
     ELSE 0 END
     ) AS SoLuongNhanVien
 FROM CTE
-
 GROUP BY PhongBan
+
+
+With CTE AS(
+Select 
+DimCustomer.CustomerKey,
+DimCustomer.EnglishOccupation,
+SUM(SalesAmount) AS Total,
+DENSE_RANK()
+Over(Partition By DimCustomer.EnglishOccupation Order By SUM(SalesAmount) DESC) AS Rank
+From FactInternetSales
+JOIN DimCustomer ON FactInternetSales.CustomerKey = DimCustomer.CustomerKey
+Group By DimCustomer.CustomerKey,DimCustomer.EnglishOccupation
+)
+Select * 
+From CTE
+Where Rank <=3
