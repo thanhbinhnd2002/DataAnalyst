@@ -24,7 +24,7 @@ SELECT
     CTE1.Nam,
     CASE
         WHEN CTE2.TongSoNhanVienVaoLam = 0 THEN 0
-        ELSE CAST(CTE1.SoNhanVienNghiViec AS FLOAT) * 100 / CTE3.TongSoNhanVien
+        ELSE CAST(CTE1.SoNhanVienNghiViec AS FLOAT) * 100 / (CTE3.TongSoNhanVien/2)
     END AS TiLeNhanVienNghiViec
 FROM 
     CTE1
