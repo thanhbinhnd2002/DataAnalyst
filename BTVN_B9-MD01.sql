@@ -21,8 +21,7 @@
 --Cau 2 : Xep hang nhan vien theo income voi tung departmentName
 
 SELECT 
-e.FirstName,
-e.LastName,
+e.EmployeeKey,
 e.BaseRate,
 e.DepartmentName,
 DENSE_RANK() 

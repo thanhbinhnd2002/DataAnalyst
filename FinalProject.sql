@@ -1,7 +1,10 @@
 --Adhoc (nhân sự)
 
 --Tỉ lệ nhân viên nghỉ việc theo từng năm ?
---Muc Tieu : cho biết sự gắn kết của nhân viên với công ty nhằm đưa ra các biện pháp giữ chân nhân viên
+--Muc Tieu : Tỉ lệ nhân viên nghỉ việc theo từng năm cho biết mức độ ổn định của lực lượng lao động trong công ty theo thời gian.
+--Thông qua việc phân tích tỉ lệ nhân viên nghỉ việc theo từng năm, chúng ta có thể nhận biết các xu hướng và mô hình phát triển nhân sự trong công ty, đồng thời đánh giá hiệu suất và sự ổn định của chính sách quản lý nhân sự.
+
+--cho biết sự gắn kết của nhân viên với công ty nhằm đưa ra các biện pháp giữ chân nhân viên
 WITH CTE1 AS (
     SELECT YEAR(EDH.EndDate) AS Nam, COUNT(DISTINCT EDH.BusinessEntityID) AS SoNhanVienNghiViec
     FROM HumanResources.EmployeeDepartmentHistory AS EDH
@@ -160,3 +163,61 @@ SUM(
 FROM CTE
 GROUP BY PhongBan;
 
+--------------------------------------------------------------------------------------------------------------------------
+-- Xay dung mo hinh RFM de phan loai khach hang
+WITH CTE AS
+(
+SELECT
+CustomerID,
+SUM(SubTotal) AS TotalRev,
+PERCENT_RANK() OVER(ORDER BY SUM(SubTotal) ASC) AS Percent_Rank
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+),
+CTE2 AS
+(
+SELECT
+CustomerID,
+COUNT(*) AS Frequency,
+PERCENT_RANK() OVER(ORDER BY COUNT(*) ASC) AS Percent_Rank
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+),
+CTE3 AS
+(
+SELECT
+CustomerID,
+MAX(OrderDate) AS LastOrderDate,
+GETDATE() AS CurrentDate,
+DATEDIFF(DAY, MAX(OrderDate), GETDATE()) AS Recency,
+Percent_Rank() OVER(ORDER BY DATEDIFF(DAY, MAX(OrderDate), GETDATE()) ASC) AS Percent_Rank
+FROM Sales.SalesOrderHeader
+GROUP BY CustomerID
+)
+SELECT
+CTE.CustomerID,
+CTE.TotalRev,
+    Case
+    WHEN CTE.Percent_Rank <= 0.25 THEN 1
+    WHEN CTE.Percent_Rank <= 0.5 THEN 2
+    WHEN CTE.Percent_Rank <= 0.75 THEN 3
+    ELSE 4
+    END Monteary_Score,
+
+CTE2.Frequency,
+    Case
+    WHEN CTE2.Percent_Rank <= 0.25 THEN 1
+    WHEN CTE2.Percent_Rank <= 0.5 THEN 2
+    WHEN CTE2.Percent_Rank <= 0.75 THEN 3
+    ELSE 4
+    END Frequency_Score,
+CTE3.Recency,
+    Case
+    When CTE3.Percent_Rank <= 0.25 THEN 1
+    WHEN CTE3.Percent_Rank <= 0.5 THEN 2
+    WHEN CTE3.Percent_Rank <= 0.75 THEN 3
+    ELSE 4
+    END Recency_Score
+FROM CTE
+JOIN CTE2 ON CTE.CustomerID = CTE2.CustomerID
+JOIN CTE3 ON CTE.CustomerID = CTE3.CustomerID
