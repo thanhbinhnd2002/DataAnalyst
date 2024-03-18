@@ -2,9 +2,10 @@
 
 --Tỉ lệ nhân viên nghỉ việc theo từng năm ?
 --Muc Tieu : Tỉ lệ nhân viên nghỉ việc theo từng năm cho biết mức độ ổn định của lực lượng lao động trong công ty theo thời gian.
---Thông qua việc phân tích tỉ lệ nhân viên nghỉ việc theo từng năm, chúng ta có thể nhận biết các xu hướng và mô hình phát triển nhân sự trong công ty, đồng thời đánh giá hiệu suất và sự ổn định của chính sách quản lý nhân sự.
-
---cho biết sự gắn kết của nhân viên với công ty nhằm đưa ra các biện pháp giữ chân nhân viên
+--Thông qua việc phân tích tỉ lệ nhân viên nghỉ việc theo từng năm, 
+--chúng ta có thể nhận biết các xu hướng và mô hình phát triển nhân sự trong công ty, 
+--đồng thời đánh giá hiệu suất và sự ổn định của chính sách quản lý nhân sự,
+--cho biết sự gắn kết của nhân viên với công ty nhằm đưa ra các biện pháp giữ chân nhân viên.
 WITH CTE1 AS (
     SELECT YEAR(EDH.EndDate) AS Nam, COUNT(DISTINCT EDH.BusinessEntityID) AS SoNhanVienNghiViec
     FROM HumanResources.EmployeeDepartmentHistory AS EDH

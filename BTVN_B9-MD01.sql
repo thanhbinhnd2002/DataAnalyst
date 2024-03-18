@@ -27,7 +27,19 @@ e.DepartmentName,
 DENSE_RANK() 
 OVER(PARTITION BY e.DepartmentName ORDER BY e.BaseRate DESC)  AS Rank
 FROM DimEmployee e;
-
+-- bonus :
+With CTE AS(
+SELECT 
+e.EmployeeKey,
+e.BaseRate,
+e.DepartmentName,
+DENSE_RANK() 
+OVER(PARTITION BY e.DepartmentName ORDER BY e.BaseRate DESC)  AS Rank
+FROM DimEmployee e
+)
+SELECT * 
+FROM CTE
+WHERE Rank <= 2;
 
 --Cau3 : tra ve top 3 khach hang co don nhieu theo tung hoc van (bang factInternetSales)
 With CTE AS
@@ -54,3 +66,14 @@ With CTE AS
 SELECT *
 FROM CTE
 WHERE Rank <= 3;
+
+With CTE AS(
+Select 
+*,
+DENSE_RANK()
+Over (Partition By Production.ProductCostHistory.ProductID Order By Production.ProductCostHistory.StartDate DESC) AS Rank
+From Production.ProductCostHistory
+)
+Select *
+FROM CTE 
+Where Rank = 1;
