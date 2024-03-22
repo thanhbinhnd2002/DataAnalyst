@@ -29,15 +29,93 @@ SELECT CustomerKey, CONCAT_WS(FirstName,MiddleName,LastName ) AS FullName, 'Inte
 From DimCustomer
 UNION 
 SELECT ResellerKey, ResellerName, 'Reseller' as LoaiKhachHang
-From DimReseller
+From DimReseller;
 
 --Bài tập 4:
 --Tiến hành trả về bảng kết quả có cấu trúc như dưới đây
 --Phân loại	Tổng số đơn hàng	Tổng doanh số	Số lượng KH
 --Internet			
 --Reseller	
-Select 'Internet' AS PhanLoai, COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct CustomerKey) as SoLuongKH
+
+Select 'Internet' AS PhanLoai ,COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct CustomerKey) as SoLuongKH,SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
 From FactInternetSales
+GROUP BY YEAR(ShipDate)
+
 UNION
-Select 'Reseller' AS PhanLoai, COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct ResellerKey) as SoLuongKH
+
+Select 'Reseller' AS PhanLoai ,COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct ResellerKey) as SoLuongKH,SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
 From FactResellerSales
+GROUP BY YEAR(ShipDate);
+
+----------------------------------------------------------------------------------------------
+--total revenue và total profit
+
+WITH CTE AS(
+Select 'Internet' AS PhanLoai,
+YEAR(ShipDate) AS Nam,
+COUNT(Distinct SalesOrderNumber) as TongSoDonHang, 
+SUM(SalesAmount) as TongDoanhSo, 
+COUNT(Distinct CustomerKey) as SoLuongKH,
+SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
+From FactInternetSales
+JOIN DimSalesTerritory ON FactInternetSales.SalesTerritoryKey = DimSalesTerritory.SalesTerritoryKey
+Where Year(ShipDate) IN (2011,2012,2013)
+GROUP BY YEAR(ShipDate)
+
+UNION
+
+Select 'Reseller' AS PhanLoai,
+YEAR(ShipDate) AS Nam ,
+COUNT(Distinct SalesOrderNumber) as TongSoDonHang, 
+SUM(SalesAmount) as TongDoanhSo, 
+COUNT(Distinct ResellerKey) as SoLuongKH,SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
+From FactResellerSales
+JOIN DimSalesTerritory ON FactResellerSales.SalesTerritoryKey = DimSalesTerritory.SalesTerritoryKey
+Where Year(ShipDate) IN (2011,2012,2013)
+GROUP BY YEAR(ShipDate)
+),CTE2 AS(
+SELECT Nam,
+SUM(LoiNhuan) as TongLoiNhuan, 
+SUM(TongDoanhSo) as TongDoanhSo, 
+SUM(SoLuongKH) as TongSoLuongKH, 
+SUM(TongSoDonHang) as TongSoDonHang
+FROM CTE
+GROUP BY  Nam
+)
+SELECT SUM(TongSoDonHang) as TongSoDonHang,
+SUM(TongDoanhSo) as TongDoanhSo, 
+SUM(TongSoLuongKH) as TongSoLuongKH
+FROM CTE2;
+
+
+--Top 3 country có lơi nhuận cao nhất
+With CTE AS(
+Select 'Internet' AS PhanLoai,SalesTerritoryCountry, COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct CustomerKey) as SoLuongKH,SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
+From FactInternetSales
+JOIN DimSalesTerritory ON FactInternetSales.SalesTerritoryKey = DimSalesTerritory.SalesTerritoryKey
+Where Year(ShipDate) IN (2011,2012,2013)
+GROUP BY SalesTerritoryCountry
+
+UNION
+
+Select 'Reseller' AS PhanLoai ,SalesTerritoryCountry, COUNT(Distinct SalesOrderNumber) as TongSoDonHang, SUM(SalesAmount) as TongDoanhSo, COUNT(Distinct ResellerKey) as SoLuongKH,SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
+From FactResellerSales
+JOIN DimSalesTerritory ON FactResellerSales.SalesTerritoryKey = DimSalesTerritory.SalesTerritoryKey
+Where Year(ShipDate) IN (2011,2012,2013)
+GROUP BY SalesTerritoryCountry
+)
+,CTE2 AS(
+SELECT 
+SalesTerritoryCountry,
+SUM(LoiNhuan) as TongLoiNhuan, 
+SUM(TongDoanhSo) as TongDoanhSo, 
+SUM(SoLuongKH) as TongSoLuongKH, 
+SUM(TongSoDonHang) as TongSoDonHang
+--DENSE_RANK() 
+--OVER (PARTITION BY SalesTerritoryCountry ORDER BY SUM(LoiNhuan) DESC) as XepHang
+FROM CTE
+GROUP BY  SalesTerritoryCountry
+)
+Select Top 3 *
+From CTE2
+Order By TongLoiNhuan DESC
