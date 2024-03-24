@@ -57,11 +57,18 @@ WHERE YEAR(YearOpened) >= 2001 AND ProductLine = 'Road'
 ORDER BY AnnualSales DESC;
 
 --Câu 9: Trả về FullName, BaseRate ( dữ liệu trong bảng DimEmployee) của TOP 5 nhân viên có SalesQuotaAmount cao nhất trong năm 2012
-SELECT TOP 5 CONCAT(FirstName,' ',MiddleName,' ',LastName) AS FullName, BaseRate
+SELECT 
+CONCAT_WS(' ', firstname, middlename, lastname) FullName,
+BaseRate
 FROM DimEmployee
-JOIN FactSalesQuota ON DimEmployee.EmployeeKey = FactSalesQuota.EmployeeKey
-WHERE YEAR(StartDate) = 2012
-ORDER BY SalesAmountQuota DESC;
+WHERE employeekey IN (
+  SELECT TOP 5 employeekey
+  FROM FactSalesQuota 
+  WHERE CalendarYear = 2012
+  GROUP BY employeekey
+  ORDER BY SUM(SalesAmountQuota) DESC
+  )
+
 
 --Câu 10: Trong bảng DimProduct, trả về ProductName và Productkey của tất cả các sản phẩm có EnglishProductSubcategoryName (bảng DimProductSubcategory) bắt đầu bằng chữ S
 SELECT DimProduct.EnglishProductName, DimProduct.ProductKey
