@@ -9,7 +9,8 @@ COUNT(Distinct CustomerKey) as SoLuongKH,
 SUM(SalesAmount)- SUM(TotalProductCost) as LoiNhuan
 From FactInternetSales
 JOIN DimSalesTerritory ON FactInternetSales.SalesTerritoryKey = DimSalesTerritory.SalesTerritoryKey
-Where Year(ShipDate) IN (2011,2012,2013)
+JOIN DimDate ON FactInternetSales.OrderDateKey = DimDate.DateKey
+Where Year(FullDateAlternateKey) IN (2011,2012,2013)
 GROUP BY YEAR(ShipDate)
 
 UNION
@@ -181,8 +182,6 @@ COUNT(Distinct ResellerKey) as SoLuongKH
 From FactResellerSales
 Where Year(ShipDate) IN (2011,2012,2013);
 
-----------------------------------------------------------------------------------------------------------------------
-
 --Revenue by Category/Color/Country
 --Revenue by Color
 WITH CTE AS(
@@ -213,22 +212,26 @@ ORDER BY TongDoanhThu DESC;
 --Revenue by Category
 WITH CTE AS(
 SELECT 'Internet' AS PhanLoai,
-EnglishProductName as Category,
+EnglishProductCategoryName as Category,
 SUM(SalesAmount) as DoanhThu
 FROM FactInternetSales
 JOIN DimProduct ON FactInternetSales.ProductKey = DimProduct.ProductKey
+JOIN DimProductSubcategory ON DimProduct.ProductSubcategoryKey = DimProductSubcategory.ProductSubcategoryKey
+JOIN DimProductCategory ON DimProductSubcategory.ProductCategoryKey = DimProductCategory.ProductCategoryKey
 Where Year(ShipDate) IN (2011,2012,2013)
-GROUP BY EnglishProductName
+GROUP BY EnglishProductCategoryName
 
 UNION
 
 SELECT 'Reseller' AS PhanLoai,
-EnglishProductName as Category,
+EnglishProductCategoryName as Category,
 SUM(SalesAmount) as DoanhThu
 FROM FactResellerSales
 JOIN DimProduct ON FactResellerSales.ProductKey = DimProduct.ProductKey
+JOIN DimProductSubcategory ON DimProduct.ProductSubcategoryKey = DimProductSubcategory.ProductSubcategoryKey
+JOIN DimProductCategory ON DimProductSubcategory.ProductCategoryKey = DimProductCategory.ProductCategoryKey
 Where Year(ShipDate) IN (2011,2012,2013)
-GROUP BY EnglishProductName
+GROUP BY EnglishProductCategoryName
 )
 SELECT Category,
 SUM(DoanhThu) as TongDoanhThu
@@ -267,13 +270,17 @@ ORDER BY TongDoanhThu DESC;
 
 --Reseller Revenue by Business Type/Group management /ProductLine
 --Reseller Revenue by Business Type
+
+
+-- test
+
 WITH CTE AS(
 SELECT
 BusinessType,
 SUM(SalesAmount) as DoanhThu
 FROM FactResellerSales
 JOIN DimReseller ON FactResellerSales.ResellerKey = DimReseller.ResellerKey
-Where Year(ShipDate) IN (2011,2012,2013)
+Where Year(DueDate) IN (2011,2012,2013)
 GROUP BY BusinessType
 )
 SELECT *
