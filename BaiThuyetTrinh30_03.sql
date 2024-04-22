@@ -270,10 +270,6 @@ ORDER BY TongDoanhThu DESC;
 
 --Reseller Revenue by Business Type/Group management /ProductLine
 --Reseller Revenue by Business Type
-
-
--- test
-
 WITH CTE AS(
 SELECT
 BusinessType,
@@ -442,7 +438,7 @@ FROM CTE3
 ,CTE5 AS(
 SELECT CustomerKey,
 DATEDIFF(DAY,MAX(OrderDate),'2014-01-01') as SoNgay,
-PERCENT_RANK() OVER (ORDER BY DATEDIFF(DAY,MAX(OrderDate),'2014-01-01')) as Rank
+PERCENT_RANK() OVER (ORDER BY DATEDIFF(DAY,MAX(OrderDate),'2014-01-01') DESC) as Rank
 From FactInternetSales
 Where Year(ShipDate) IN (2011,2012,2013)
 group by CustomerKey
